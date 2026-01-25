@@ -20,7 +20,7 @@ services:
       - DB_HOST=db
       - DB_USER=root
       - DB_PASSWORD=root
-      - DB_NAME=loti_db
+      - DB_NAME=lotl_dfms
     depends_on:
       - db
     networks:
@@ -33,7 +33,7 @@ services:
       - DB_HOST=db
       - DB_USER=root
       - DB_PASSWORD=root
-      - DB_NAME=loti_db
+      - DB_NAME=lotl_dfms
       - OLLAMA_HOST=http://ollama:11434
     depends_on:
       - db

@@ -1,13 +1,23 @@
-import React from 'react';
-import { Edit2, Trash2, Plus, Moon, Sun } from 'lucide-react';
-
-const users = [
-    { id: 1, name: 'Admin User', email: 'admin@sentinel.sec', role: 'ADMIN', status: 'ACTIVE', initials: 'AU' },
-    { id: 2, name: 'Jane Smith', email: 'jane.smith@sentinel.sec', role: 'ANALYST', status: 'ACTIVE', initials: 'JS' },
-    { id: 3, name: 'Bob Johnson', email: 'bob.j@sentinel.sec', role: 'VIEWER', status: 'INACTIVE', initials: 'BJ' },
-];
+import React, { useState, useEffect } from 'react';
+import { Edit2, Trash2, Plus, Moon, Sun, User as UserIcon, FileText as FileTextIcon, Clock as ClockIcon, Settings as SettingsIcon } from 'lucide-react';
 
 const Systems = () => {
+    const [users, setUsers] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        fetch('http://localhost:5001/api/users')
+            .then(res => res.json())
+            .then(data => {
+                setUsers(data);
+                setLoading(false);
+            })
+            .catch(err => {
+                console.error("Failed to fetch users:", err);
+                setLoading(false);
+            });
+    }, []);
+
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
 
@@ -15,9 +25,9 @@ const Systems = () => {
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div style={{ display: 'flex', gap: '8px' }}>
                     <button className="btn btn-primary" style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}><UserIcon /> USERS</button>
-                    <button className="btn btn-ghost" style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}><FileText /> RULES</button>
-                    <button className="btn btn-ghost" style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}><Clock /> AUDIT</button>
-                    <button className="btn btn-ghost" style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}><Settings /> SETTINGS</button>
+                    <button className="btn btn-ghost" style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}><FileTextIcon /> RULES</button>
+                    <button className="btn btn-ghost" style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}><ClockIcon /> AUDIT</button>
+                    <button className="btn btn-ghost" style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}><SettingsIcon /> SETTINGS</button>
                 </div>
                 <button className="btn btn-primary" style={{ padding: '0.5rem 1rem', fontSize: '0.85rem', gap: '6px' }}>
                     <Plus size={16} /> New User
@@ -79,11 +89,5 @@ const Systems = () => {
         </div>
     );
 };
-
-// Simple Icon Placeholders to avoid import clutter for tab icons if not needed often
-const UserIcon = () => <span style={{ marginRight: '6px' }}>👤</span>;
-const FileText = () => <span style={{ marginRight: '6px' }}>📄</span>;
-const Clock = () => <span style={{ marginRight: '6px' }}>🕒</span>;
-const Settings = () => <span style={{ marginRight: '6px' }}>⚙️</span>;
 
 export default Systems;

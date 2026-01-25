@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Send, Terminal, Shield } from 'lucide-react';
 
 const mockAlerts = [
@@ -10,7 +10,38 @@ const mockAlerts = [
 ];
 
 const Intelligence = () => {
-    const [selectedAlert, setSelectedAlert] = useState(mockAlerts[0]);
+    const [alerts, setAlerts] = useState([]);
+    const [selectedAlert, setSelectedAlert] = useState(null);
+    const [loading, setLoading] = useState(true);
+
+    const fetchAlerts = () => {
+        fetch('http://localhost:5001/api/alerts')
+            .then(res => res.json())
+            .then(data => {
+                setAlerts(data);
+                if (data.length > 0 && !selectedAlert) setSelectedAlert(data[0]);
+                setLoading(false);
+            })
+            .catch(err => console.error("Failed to fetch alerts:", err));
+    };
+
+    useEffect(() => {
+        fetchAlerts();
+        // Poll every 10 seconds for real-time updates
+        const interval = setInterval(fetchAlerts, 10000);
+        return () => clearInterval(interval);
+    }, []);
+
+    const handleAcknowledge = async (id, e) => {
+        e.stopPropagation();
+        try {
+            await fetch(`http://localhost:5001/api/alerts/${id}/ack`, { method: 'POST' });
+            // Refresh local state to show 'open' status or remove from 'new' list if filtering
+            setAlerts(prev => prev.map(a => a.alert_id === id ? { ...a, status: 'open' } : a));
+        } catch (err) {
+            console.error("Ack failed", err);
+        }
+    };
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
@@ -18,7 +49,7 @@ const Intelligence = () => {
             {/* Action Bar */}
             <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
                 <button className="btn btn-primary" style={{ borderRadius: '20px', padding: '0.5rem 1.5rem', fontWeight: 600 }}>
-                    ACTIVE ALERTS (12)
+                    ACTIVE ALERTS ({alerts.length})
                 </button>
                 <button className="btn btn-ghost" style={{ borderRadius: '20px', color: 'var(--text-secondary)' }}>
                     LIVE TELEMETRY
@@ -41,17 +72,26 @@ const Intelligence = () => {
                                 </tr>
                             </thead>
                             <tbody>
-                                {mockAlerts.map((alert) => (
-                                    <tr key={alert.id} style={{ borderBottom: '1px solid var(--border-color)', cursor: 'pointer' }} onClick={() => setSelectedAlert(alert)}>
-                                        <td style={{ padding: '16px' }}>{alert.time}</td>
+                                {alerts.map((alert) => (
+                                    <tr key={alert.alert_id} style={{ borderBottom: '1px solid var(--border-color)', cursor: 'pointer' }} onClick={() => setSelectedAlert(alert)}>
+                                        <td style={{ padding: '16px' }}>{new Date(alert.timestamp).toLocaleTimeString()}</td>
                                         <td style={{ padding: '16px' }}>
-                                            <span className={`status-badge ${alert.severity === 'CRITICAL' ? 'status-critical' : 'status-high'}`}>
-                                                {alert.severity}
+                                            <span className={`status-badge ${alert.severity === 'critical' ? 'status-critical' : 'status-high'}`}>
+                                                {alert.severity.toUpperCase()}
                                             </span>
                                         </td>
-                                        <td style={{ padding: '16px', fontWeight: 500 }}>{alert.rule}</td>
+                                        <td style={{ padding: '16px', fontWeight: 500 }}>{alert.rule_name}</td>
                                         <td style={{ padding: '16px', color: 'var(--text-muted)' }}>{alert.host}</td>
-                                        <td style={{ padding: '16px', color: 'var(--sentinel-green)' }}>{alert.status}</td>
+                                        <td style={{ padding: '16px', color: 'var(--sentinel-green)' }}>
+                                            {alert.status === 'new' ? (
+                                                <button
+                                                    onClick={(e) => handleAcknowledge(alert.alert_id, e)}
+                                                    style={{ background: 'none', border: '1px solid var(--sentinel-green)', color: 'var(--sentinel-green)', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', fontSize: '0.7rem' }}
+                                                >
+                                                    ACKNOWLEDGE
+                                                </button>
+                                            ) : alert.status.toUpperCase()}
+                                        </td>
                                     </tr>
                                 ))}
                             </tbody>

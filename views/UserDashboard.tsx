@@ -3,9 +3,12 @@ import {
     AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts';
 import {
-    Shield, AlertOctagon, Activity, Cpu, HardDrive, Wifi, FileWarning, Lock, Unlock, Search
+    Shield, AlertOctagon, Activity, Cpu, HardDrive, Wifi, FileWarning, Lock, Unlock, Search, Plus, Terminal, Copy
 } from 'lucide-react';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
+const API_URL = 'http://localhost:5001/api';
 const mockGraphData = [
     { name: '10:00', activity: 20 }, { name: '10:05', activity: 35 },
     { name: '10:10', activity: 25 }, { name: '10:15', activity: 60 },
@@ -25,6 +28,24 @@ const UserDashboard = () => {
     const [isScanning, setIsScanning] = useState(false);
     const [scanProgress, setScanProgress] = useState(0);
     const [networkLocked, setNetworkLocked] = useState(false);
+    const [showInstallModal, setShowInstallModal] = useState(false);
+    const [logs, setLogs] = useState<any[]>([]);
+
+    useEffect(() => {
+        // Fetch logs
+        const fetchLogs = async () => {
+            try {
+                const res = await fetch(`${API_URL}/logs/all`);
+                const data = await res.json();
+                setLogs(data);
+            } catch (err) {
+                console.error("Failed to fetch logs", err);
+            }
+        };
+        fetchLogs();
+        const interval = setInterval(fetchLogs, 5000);
+        return () => clearInterval(interval);
+    }, []);
 
     // Simulate scan effect
     useEffect(() => {
@@ -62,6 +83,21 @@ const UserDashboard = () => {
                 </div>
                 <div style={{ display: 'flex', gap: '16px' }}>
                     {/* Isolation Toggle */}
+                    <button
+                        className="btn"
+                        onClick={() => setShowInstallModal(true)}
+                        style={{
+                            background: 'var(--sentinel-blue)',
+                            color: 'white',
+                            border: 'none',
+                            display: 'flex',
+                            gap: '8px',
+                            fontWeight: 600
+                        }}
+                    >
+                        <Plus size={16} /> ADD COMPUTER
+                    </button>
+
                     <button
                         className="btn"
                         onClick={() => setNetworkLocked(!networkLocked)}
@@ -216,9 +252,66 @@ const UserDashboard = () => {
                         </div>
                     </div>
 
+                    {/* Live System Logs */}
+                    <div className="card" style={{ flex: 1, maxHeight: '400px', overflowY: 'auto' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+                            <Terminal size={16} color="var(--text-primary)" />
+                            <span style={{ fontWeight: 600 }}>Live System Logs (Agent Stream)</span>
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '0.75rem', fontFamily: 'monospace' }}>
+                            {logs.map((log, i) => (
+                                <div key={i} style={{ display: 'flex', gap: '12px', padding: '8px', background: 'rgba(0,0,0,0.2)', borderRadius: '4px' }}>
+                                    <span style={{ color: 'var(--text-muted)', minWidth: '70px' }}>{new Date(log.timestamp).toLocaleTimeString()}</span>
+                                    <span style={{ color: 'var(--sentinel-blue)', minWidth: '100px' }}>{log.process_name}</span>
+                                    <span style={{ color: 'var(--text-secondary)' }}>{log.command_line || 'N/A'}</span>
+                                    <span style={{ marginLeft: 'auto', color: 'var(--text-muted)' }}>{log.user_name}</span>
+                                </div>
+                            ))}
+                            {logs.length === 0 && <div style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '20px' }}>No logs incoming...</div>}
+                        </div>
+                    </div>
+
                 </div>
 
             </div>
+
+            {/* Add Device Modal */}
+            {showInstallModal && (
+                <div style={{
+                    position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+                    background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000
+                }}>
+                    <div className="card" style={{ width: '600px', position: 'relative' }}>
+                        <h2 style={{ marginBottom: '16px' }}>Add New Computer</h2>
+                        <p style={{ color: 'var(--text-secondary)', marginBottom: '24px' }}>
+                            To monitor a new Windows device, run this command in **PowerShell (Administrator)**:
+                        </p>
+
+                        <div style={{ position: 'relative', marginBottom: '24px' }}>
+                            <SyntaxHighlighter language="powershell" style={vscDarkPlus} customStyle={{ padding: '16px', borderRadius: '8px' }}>
+                                {`$ServerIP = "${window.location.hostname}"
+$Url = "http://${window.location.hostname}:5001/api/enroll"
+# ... (Full script would go here in prod, for now providing simple enrollment snippet)
+Invoke-RestMethod -Uri $Url -Method Post -Body (@{
+    hostname = $env:COMPUTERNAME
+    password = "MySecureProjectPassword2026!"
+    os_info = (Get-CimInstance Win32_OperatingSystem).Caption
+} | ConvertTo-Json) -ContentType "application/json"`}
+                            </SyntaxHighlighter>
+                            <button className="btn" style={{ position: 'absolute', top: '8px', right: '8px', padding: '4px 8px', fontSize: '0.75rem' }}
+                                onClick={() => navigator.clipboard.writeText('...copy logic...')}
+                            >
+                                <Copy size={14} /> COPY
+                            </button>
+                        </div>
+
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+                            <button className="btn btn-ghost" onClick={() => setShowInstallModal(false)}>CLOSE</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
         </div>
     );
 };

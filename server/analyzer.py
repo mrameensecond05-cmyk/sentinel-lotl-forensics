@@ -11,7 +11,7 @@ DB_CONFIG = {
     'host': os.environ.get('DB_HOST', 'db'),
     'user': os.environ.get('DB_USER', 'root'),
     'password': os.environ.get('DB_PASSWORD', 'root'),
-    'database': os.environ.get('DB_NAME', 'loti_db')
+    'database': os.environ.get('DB_NAME', 'lotl_dfms')
 }
 
 OLLAMA_HOST = os.environ.get('OLLAMA_HOST', 'http://ollama:11434')
