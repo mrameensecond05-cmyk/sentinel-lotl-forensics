@@ -60,11 +60,11 @@ const LoginUser = () => {
     };
 
     return (
-        <div className="container" style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0B0C15' }}>
-            <div className="glass-panel" style={{ padding: '3rem', borderRadius: '16px', maxWidth: '420px', width: '100%', borderColor: 'var(--sentinel-green)', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+        <div className="container" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+            <div className="glass-panel" style={{ padding: '3rem', borderRadius: '16px', maxWidth: '420px', width: '100%', borderColor: 'var(--lotiflow-green)', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                 <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-                    <div style={{ display: 'inline-flex', padding: '1rem', borderRadius: '50%', background: 'rgba(0, 208, 132, 0.1)', marginBottom: '1rem' }}>
-                        <User size={40} color="var(--sentinel-green)" />
+                    <div style={{ display: 'inline-flex', padding: '1rem', borderRadius: '50%', background: 'rgba(0, 208, 132, 0.1)', marginBottom: '1rem' }} className="animate-float">
+                        <User size={40} color="var(--lotiflow-green)" />
                     </div>
                     <h1 style={{ fontSize: '1.5rem', fontWeight: 700 }}>{isLogin ? 'User Login' : 'Create Account'}</h1>
                     <p style={{ color: 'var(--text-secondary)' }}>Manage your Monitored Hosts</p>

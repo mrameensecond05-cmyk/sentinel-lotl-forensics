@@ -72,11 +72,11 @@ const LoginAdmin = () => {
     };
 
     return (
-        <div className="container" style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0B0C15' }}>
-            <div className="glass-panel" style={{ padding: '3rem', borderRadius: '16px', maxWidth: '420px', width: '100%', borderColor: 'var(--sentinel-blue)', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+        <div className="container" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+            <div className="glass-panel" style={{ padding: '3rem', borderRadius: '16px', maxWidth: '420px', width: '100%', borderColor: 'var(--lotiflow-blue)', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                 <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-                    <div style={{ display: 'inline-flex', padding: '1rem', borderRadius: '50%', background: 'rgba(59, 130, 246, 0.1)', marginBottom: '1rem' }}>
-                        <Server size={40} color="var(--sentinel-blue)" />
+                    <div style={{ display: 'inline-flex', padding: '1rem', borderRadius: '50%', background: 'rgba(59, 130, 246, 0.1)', marginBottom: '1rem' }} className="animate-float">
+                        <Server size={40} color="var(--lotiflow-blue)" />
                     </div>
                     <h1 style={{ fontSize: '1.5rem', fontWeight: 700 }}>{isRegistering ? 'Admin Registration' : 'Admin Portal'}</h1>
                     <p style={{ color: 'var(--text-secondary)' }}>{isRegistering ? 'Create new SOC Administrator' : 'SOC Management Access'}</p>
@@ -110,7 +110,7 @@ const LoginAdmin = () => {
 
                     {error && <div className="text-red-500 text-sm flex items-center gap-2 bg-red-900/20 p-2 rounded"><AlertCircle size={14} /> {error}</div>}
 
-                    <button type="submit" disabled={loading} className="btn btn-primary w-full flex justify-center gap-2" style={{ background: 'var(--sentinel-blue)', color: 'white' }}>
+                    <button type="submit" disabled={loading} className="btn btn-primary w-full flex justify-center gap-2" style={{ background: 'var(--lotiflow-blue)', color: 'white' }}>
                         {loading ? 'Processing...' : (isRegistering ? 'Register & Login' : 'Access Console')}
                         {isRegistering ? <UserPlus size={18} /> : <LogIn size={18} />}
                     </button>

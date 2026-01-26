@@ -70,7 +70,7 @@ const UserDashboard = () => {
     };
 
     return (
-        <div style={{ backgroundColor: 'var(--bg-main)', minHeight: '100vh', padding: '2rem', color: 'var(--text-primary)' }}>
+        <div style={{ backgroundColor: 'var(--bg-app)', minHeight: '100vh', padding: '2rem', color: 'var(--text-primary)' }}>
 
             {/* Header */}
             <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
@@ -260,11 +260,17 @@ const UserDashboard = () => {
                         </div>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '0.75rem', fontFamily: 'monospace' }}>
                             {logs.map((log, i) => (
-                                <div key={i} style={{ display: 'flex', gap: '12px', padding: '8px', background: 'rgba(0,0,0,0.2)', borderRadius: '4px' }}>
+                                <div key={i} style={{
+                                    display: 'flex',
+                                    gap: '12px',
+                                    padding: '12px 8px',
+                                    borderBottom: 'var(--border)',
+                                    alignItems: 'center'
+                                }}>
                                     <span style={{ color: 'var(--text-muted)', minWidth: '70px' }}>{new Date(log.timestamp).toLocaleTimeString()}</span>
-                                    <span style={{ color: 'var(--sentinel-blue)', minWidth: '100px' }}>{log.process_name}</span>
+                                    <span style={{ color: 'var(--sentinel-blue)', minWidth: '100px', fontWeight: 500 }}>{log.process_name}</span>
                                     <span style={{ color: 'var(--text-secondary)' }}>{log.command_line || 'N/A'}</span>
-                                    <span style={{ marginLeft: 'auto', color: 'var(--text-muted)' }}>{log.user_name}</span>
+                                    <span style={{ marginLeft: 'auto', color: 'var(--text-muted)', fontSize: '0.7rem' }}>{log.user_name}</span>
                                 </div>
                             ))}
                             {logs.length === 0 && <div style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '20px' }}>No logs incoming...</div>}
@@ -287,22 +293,50 @@ const UserDashboard = () => {
                             To monitor a new Windows device, run this command in **PowerShell (Administrator)**:
                         </p>
 
-                        <div style={{ position: 'relative', marginBottom: '24px' }}>
-                            <SyntaxHighlighter language="powershell" style={vscDarkPlus} customStyle={{ padding: '16px', borderRadius: '8px' }}>
-                                {`$ServerIP = "${window.location.hostname}"
-$Url = "http://${window.location.hostname}:5001/api/enroll"
-# ... (Full script would go here in prod, for now providing simple enrollment snippet)
-Invoke-RestMethod -Uri $Url -Method Post -Body (@{
-    hostname = $env:COMPUTERNAME
-    password = "MySecureProjectPassword2026!"
-    os_info = (Get-CimInstance Win32_OperatingSystem).Caption
-} | ConvertTo-Json) -ContentType "application/json"`}
-                            </SyntaxHighlighter>
-                            <button className="btn" style={{ position: 'absolute', top: '8px', right: '8px', padding: '4px 8px', fontSize: '0.75rem' }}
-                                onClick={() => navigator.clipboard.writeText('...copy logic...')}
-                            >
-                                <Copy size={14} /> COPY
-                            </button>
+                        <div style={{ marginBottom: '24px' }}>
+                            <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '16px' }}>
+                                <a
+                                    href={`http://${window.location.hostname}:8080/api/agent/download`}
+                                    className="btn"
+                                    style={{
+                                        background: 'var(--sentinel-blue)',
+                                        color: 'white',
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: '8px',
+                                        textDecoration: 'none'
+                                    }}
+                                >
+                                    <HardDrive size={16} /> DOWNLOAD AGENT BUNDLE
+                                </a>
+                                <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>(.zip, ~10KB)</span>
+                            </div>
+
+                            <ol style={{ color: 'var(--text-secondary)', paddingLeft: '20px', fontSize: '0.9rem', lineHeight: '1.6' }}>
+                                <li>Download and <b>Extract</b> the zip file on the target Windows machine.</li>
+                                <li>Right-click <code>install.ps1</code> and select <b>Run with PowerShell</b>.</li>
+                                <li>When prompted for the Server URL, enter:</li>
+                            </ol>
+
+                            <div style={{
+                                background: '#1e2029',
+                                padding: '12px',
+                                borderRadius: '6px',
+                                fontFamily: 'monospace',
+                                color: 'var(--sentinel-green)',
+                                border: '1px solid var(--border-color)',
+                                marginTop: '8px',
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center'
+                            }}>
+                                <span>http://{window.location.hostname}:8080</span>
+                                <button className="btn" style={{ padding: '4px 8px', fontSize: '0.75rem' }}
+                                    onClick={() => navigator.clipboard.writeText(`http://${window.location.hostname}:8080`)}
+                                >
+                                    <Copy size={14} /> COPY
+                                </button>
+                            </div>
                         </div>
 
                         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>

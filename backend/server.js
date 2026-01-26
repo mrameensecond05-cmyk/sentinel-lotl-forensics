@@ -4,14 +4,38 @@ const cors = require('cors');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
+const AdmZip = require('adm-zip');
+const path = require('path');
+const session = require('express-session');
+const SQLiteStore = require('connect-sqlite3')(session);
 require('dotenv').config();
 
 const ENROLLMENT_SECRET = "MySecureProjectPassword2026!";
 const PORT = process.env.PORT || 5001;
 
 const app = express();
-app.use(cors());
+app.use(cors({
+    origin: 'http://localhost:3000',
+    credentials: true
+}));
 app.use(express.json());
+
+// Session Management
+app.use(session({
+    store: new SQLiteStore({
+        db: 'sessions.db',
+        dir: './'
+    }),
+    secret: process.env.SESSION_SECRET || 'lotiflow-secret-key-2026',
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+        maxAge: 30 * 60 * 1000, // 30 minutes
+        httpOnly: true,
+        secure: false, // Set to true in production with HTTPS
+        sameSite: 'lax'
+    }
+}));
 
 // Database Setup
 const db = new sqlite3.Database('./lotl.db', (err) => {
@@ -41,6 +65,11 @@ const dbAll = (sql, params = []) => {
         });
     });
 };
+
+// Import middleware
+const { requireAuth, requireAdmin } = require('./middleware/auth');
+const { auditLog } = require('./middleware/audit');
+
 
 const dbGet = (sql, params = []) => {
     return new Promise((resolve, reject) => {
@@ -138,6 +167,76 @@ async function initDB() {
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )`);
 
+        // 9. Process Events (Logs)
+        await dbRun(`CREATE TABLE IF NOT EXISTS lotl_process_event (
+            event_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            host_id INTEGER,
+            hostname TEXT,
+            process_name TEXT,
+            command_line TEXT,
+            user_name TEXT,
+            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+            process_id INTEGER,
+            parent_process_id INTEGER,
+            FOREIGN KEY (host_id) REFERENCES lotl_host(host_id)
+        )`);
+
+        // 10. Case-Alert Linking
+        await dbRun(`CREATE TABLE IF NOT EXISTS lotl_case_alert (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            case_id INTEGER,
+            alert_id INTEGER,
+            added_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (case_id) REFERENCES lotl_case(case_id),
+            FOREIGN KEY (alert_id) REFERENCES lotl_alert(alert_id)
+        )`);
+
+        // 11. Case Notes
+        await dbRun(`CREATE TABLE IF NOT EXISTS lotl_case_note (
+            note_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            case_id INTEGER,
+            analyst_id INTEGER,
+            note_text TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (case_id) REFERENCES lotl_case(case_id),
+            FOREIGN KEY (analyst_id) REFERENCES lotl_login(login_id)
+        )`);
+
+        // 12. Case Assignment
+        await dbRun(`CREATE TABLE IF NOT EXISTS lotl_case_assignment (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            case_id INTEGER,
+            analyst_id INTEGER,
+            assigned_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (case_id) REFERENCES lotl_case(case_id),
+            FOREIGN KEY (analyst_id) REFERENCES lotl_login(login_id)
+        )`);
+
+        // 13. Audit Log
+        await dbRun(`CREATE TABLE IF NOT EXISTS lotl_audit_log (
+            log_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER,
+            action_type TEXT,
+            target_type TEXT,
+            target_id INTEGER,
+            description TEXT,
+            ip_address TEXT,
+            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES lotl_login(login_id)
+        )`);
+
+        // 14. Alert Actions (for acknowledgement tracking)
+        await dbRun(`CREATE TABLE IF NOT EXISTS lotl_alert_action (
+            action_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            alert_id INTEGER,
+            analyst_id INTEGER,
+            action_type TEXT,
+            notes TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (alert_id) REFERENCES lotl_alert(alert_id),
+            FOREIGN KEY (analyst_id) REFERENCES lotl_login(login_id)
+        )`);
+
         // Seed Data
         const role = await dbGet("SELECT role_id FROM lotl_role WHERE role_name = 'Admin'");
         if (!role) {
@@ -188,20 +287,94 @@ app.post('/api/register', async (req, res) => {
 // 2. Login
 app.post('/api/login', async (req, res) => {
     const { email, password } = req.body;
+    const ipAddress = req.ip || req.connection.remoteAddress;
+
     try {
-        const user = await dbGet('SELECT * FROM lotl_login WHERE email = ?', [email]);
-        if (!user) return res.status(401).json({ error: 'Invalid credentials' });
+        const user = await dbGet('SELECT l.*, r.role_name FROM lotl_login l JOIN lotl_role r ON l.role_id = r.role_id WHERE l.email = ?', [email]);
+
+        if (!user) {
+            // Log failed login attempt
+            await dbRun(`
+                INSERT INTO lotl_audit_log (user_id, action_type, description, ip_address)
+                VALUES (NULL, 'failed_login', ?, ?)
+            `, [`Failed login attempt for ${email}`, ipAddress]);
+            return res.status(401).json({ error: 'Invalid credentials' });
+        }
+
+        // Check if account is active
+        if (user.status !== 'active') {
+            return res.status(403).json({ error: 'Account disabled' });
+        }
 
         const match = await bcrypt.compare(password, user.password_hash);
         if (match || (password === 'admin' && user.email.startsWith('admin'))) {
-            const userRole = user.role_id === 1 ? 'admin' : 'user';
-            const token = jwt.sign({ id: user.login_id, role: userRole }, 'secret_key');
-            return res.json({ token, role: userRole, user: { name: user.full_name, email: user.email } });
+            // Update last login time
+            await dbRun('UPDATE lotl_login SET last_login_time = CURRENT_TIMESTAMP WHERE login_id = ?', [user.login_id]);
+
+            // Create session
+            req.session.user = {
+                id: user.login_id,
+                name: user.full_name,
+                email: user.email,
+                role: user.role_name
+            };
+
+            // Log successful login
+            await dbRun(`
+                INSERT INTO lotl_audit_log (user_id, action_type, description, ip_address)
+                VALUES (?, 'login', ?, ?)
+            `, [user.login_id, `Successful login for ${user.email}`, ipAddress]);
+
+            return res.json({
+                success: true,
+                role: user.role_name.toLowerCase(),
+                user: {
+                    name: user.full_name,
+                    email: user.email
+                }
+            });
         }
+
+        // Log failed login attempt
+        await dbRun(`
+            INSERT INTO lotl_audit_log (user_id, action_type, description, ip_address)
+            VALUES (?, 'failed_login', ?, ?)
+        `, [user.login_id, `Failed login attempt for ${email}`, ipAddress]);
+
         res.status(401).json({ error: 'Invalid credentials' });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
+});
+
+// 2.1 Logout
+app.post('/api/logout', requireAuth, async (req, res) => {
+    const userId = req.session.user.id;
+    const ipAddress = req.ip || req.connection.remoteAddress;
+
+    try {
+        // Log logout
+        await dbRun(`
+            INSERT INTO lotl_audit_log (user_id, action_type, description, ip_address)
+            VALUES (?, 'logout', ?, ?)
+        `, [userId, `User logged out`, ipAddress]);
+
+        req.session.destroy((err) => {
+            if (err) {
+                return res.status(500).json({ error: 'Logout failed' });
+            }
+            res.json({ success: true, message: 'Logged out successfully' });
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// 2.2 Get Current User
+app.get('/api/me', requireAuth, (req, res) => {
+    res.json({
+        user: req.session.user
+    });
 });
 
 // 3. Get Alerts
@@ -285,7 +458,62 @@ app.get('/api/cases', async (req, res) => {
     }
 });
 
+// 9. Get Hosts (Endpoints)
+app.get('/api/hosts', async (req, res) => {
+    try {
+        const rows = await dbAll('SELECT * FROM lotl_host ORDER BY last_seen DESC');
+        res.json(rows);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// 10. Get Detection Rules
+app.get('/api/rules', async (req, res) => {
+    try {
+        const rows = await dbAll('SELECT * FROM lotl_detection_rule ORDER BY rule_name');
+        res.json(rows);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// 11. Get All Process Events (Live Telemetry)
+app.get('/api/logs/all', async (req, res) => {
+    try {
+        const rows = await dbAll('SELECT * FROM lotl_process_event ORDER BY timestamp DESC LIMIT 100');
+        res.json(rows);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // 9. Enroll Agent
+app.get('/api/agent/download', async (req, res) => {
+    try {
+        const zip = new AdmZip();
+        const agentFolder = path.join(__dirname, '../agent');
+
+        // Add only specific files to avoid venv or unwanted files
+        zip.addLocalFile(path.join(agentFolder, 'agent_core.py'));
+        zip.addLocalFile(path.join(agentFolder, 'install.ps1'));
+        zip.addLocalFile(path.join(agentFolder, 'requirements.txt'));
+
+        // Explicitly DO NOT zip agent_config.json to ensure a fresh install for every user
+
+        const downloadName = `LOTIflow_Agent_Installer.zip`;
+        const data = zip.toBuffer();
+
+        res.set('Content-Type', 'application/octet-stream');
+        res.set('Content-Disposition', `attachment; filename=${downloadName}`);
+        res.set('Content-Length', data.length);
+        res.send(data);
+    } catch (err) {
+        console.error("Zip Error:", err);
+        res.status(500).json({ error: "Failed to create agent bundle" });
+    }
+});
+
 app.post('/api/enroll', async (req, res) => {
     const { hostname, password, os_info } = req.body;
     if (password !== ENROLLMENT_SECRET) return res.status(403).json({ error: "Invalid Enrollment Password" });
@@ -310,7 +538,7 @@ app.post('/api/enroll', async (req, res) => {
         const agentKey = crypto.randomBytes(32).toString('hex');
 
         await dbRun(
-            "INSERT INTO lotl_agent (host_id, agent_uuid, agent_name, status, last_seen) VALUES (?, ?, 'Python-Sentinel', 'active', CURRENT_TIMESTAMP)",
+            "INSERT INTO lotl_agent (host_id, agent_uuid, agent_name, status, last_seen) VALUES (?, ?, 'Python-LOTIflow', 'active', CURRENT_TIMESTAMP)",
             [hostId, agentUuid]
         );
 

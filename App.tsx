@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Layout from './components/Layout';
+import ProtectedRoute from './components/ProtectedRoute';
 import LoginSelection from './views/Login';
 import LoginAdmin from './views/LoginAdmin';
 import LoginUser from './views/LoginUser';
@@ -19,17 +20,37 @@ function App() {
         <Route path="/login/admin" element={<LoginAdmin />} />
         <Route path="/login/user" element={<LoginUser />} />
 
-        {/* Protected Admin Routes */}
+        {/* Protected Admin Routes - Users cannot access these */}
         <Route element={<Layout />}>
-          <Route path="/overview" element={<Overview />} />
+          <Route path="/overview" element={
+            <ProtectedRoute requireAdmin={true}>
+              <Overview />
+            </ProtectedRoute>
+          } />
           <Route path="/admin" element={<Navigate to="/overview" replace />} />
-          <Route path="/intelligence" element={<Intelligence />} />
-          <Route path="/systems" element={<Systems />} />
-          <Route path="/profile" element={<UserProfile />} />
+          <Route path="/intelligence" element={
+            <ProtectedRoute requireAdmin={true}>
+              <Intelligence />
+            </ProtectedRoute>
+          } />
+          <Route path="/systems" element={
+            <ProtectedRoute requireAdmin={true}>
+              <Systems />
+            </ProtectedRoute>
+          } />
+          <Route path="/profile" element={
+            <ProtectedRoute requireAdmin={true}>
+              <UserProfile />
+            </ProtectedRoute>
+          } />
         </Route>
 
-        {/* User Routes */}
-        <Route path="/user" element={<UserDashboard />} />
+        {/* Protected User Routes - Admins redirected to admin dashboard */}
+        <Route path="/user" element={
+          <ProtectedRoute requireAdmin={false}>
+            <UserDashboard />
+          </ProtectedRoute>
+        } />
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

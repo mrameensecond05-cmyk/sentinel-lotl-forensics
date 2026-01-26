@@ -73,15 +73,73 @@ const Overview = () => {
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
                             <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Global Alert Velocity</span>
                             <span style={{ fontSize: '0.75rem', color: 'var(--sentinel-green)', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--sentinel-green)' }}></div>
+                                <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: 'var(--sentinel-green)', boxShadow: '0 0 8px var(--sentinel-green)' }} className="animate-pulse"></div>
                                 REAL-TIME
                             </span>
                         </div>
                         <ResponsiveContainer width="100%" height="100%">
                             <LineChart data={mockLineData}>
-                                <Line type="monotone" dataKey="val" stroke="var(--sentinel-green)" strokeWidth={3} dot={false} />
-                                <Tooltip contentStyle={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-color)', color: 'white' }} />
-                                <XAxis dataKey="name" stroke="var(--text-muted)" fontSize={12} />
+                                <defs>
+                                    <linearGradient id="colorGradient" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="5%" stopColor="#06b6d4" stopOpacity={0.8} />
+                                        <stop offset="50%" stopColor="#3b82f6" stopOpacity={0.4} />
+                                        <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0.1} />
+                                    </linearGradient>
+                                    <linearGradient id="lineGradient" x1="0" y1="0" x2="1" y2="0">
+                                        <stop offset="0%" stopColor="#06b6d4" />
+                                        <stop offset="50%" stopColor="#3b82f6" />
+                                        <stop offset="100%" stopColor="#8b5cf6" />
+                                    </linearGradient>
+                                </defs>
+                                <Line
+                                    type="monotone"
+                                    dataKey="val"
+                                    stroke="url(#lineGradient)"
+                                    strokeWidth={4}
+                                    dot={{
+                                        fill: '#06b6d4',
+                                        strokeWidth: 2,
+                                        r: 5,
+                                        stroke: '#fff',
+                                        filter: 'drop-shadow(0 0 6px #06b6d4)'
+                                    }}
+                                    activeDot={{
+                                        r: 8,
+                                        fill: '#3b82f6',
+                                        stroke: '#fff',
+                                        strokeWidth: 2,
+                                        filter: 'drop-shadow(0 0 10px #3b82f6)'
+                                    }}
+                                    fill="url(#colorGradient)"
+                                    fillOpacity={1}
+                                    style={{
+                                        filter: 'drop-shadow(0 0 8px rgba(6, 182, 212, 0.6))'
+                                    }}
+                                />
+                                <Tooltip
+                                    contentStyle={{
+                                        backgroundColor: 'rgba(17, 24, 39, 0.95)',
+                                        borderColor: '#06b6d4',
+                                        borderWidth: 2,
+                                        borderRadius: '8px',
+                                        color: 'white',
+                                        boxShadow: '0 0 20px rgba(6, 182, 212, 0.5)'
+                                    }}
+                                    labelStyle={{ color: '#06b6d4', fontWeight: 'bold' }}
+                                />
+                                <XAxis
+                                    dataKey="name"
+                                    stroke="var(--text-muted)"
+                                    fontSize={12}
+                                    axisLine={{ stroke: 'rgba(255,255,255,0.1)' }}
+                                    tickLine={{ stroke: 'rgba(255,255,255,0.1)' }}
+                                />
+                                <YAxis
+                                    stroke="var(--text-muted)"
+                                    fontSize={12}
+                                    axisLine={{ stroke: 'rgba(255,255,255,0.1)' }}
+                                    tickLine={{ stroke: 'rgba(255,255,255,0.1)' }}
+                                />
                             </LineChart>
                         </ResponsiveContainer>
                     </div>
@@ -137,27 +195,52 @@ const Overview = () => {
                                     <Pie
                                         data={policyData}
                                         innerRadius={60}
-                                        outerRadius={80}
-                                        paddingAngle={5}
+                                        outerRadius={85}
+                                        paddingAngle={6}
                                         dataKey="value"
+                                        style={{
+                                            filter: 'drop-shadow(0 0 8px rgba(1, 253, 169, 0.97))',
+                                            cursor: 'pointer'
+                                        }}
                                     >
                                         {policyData.map((entry, index) => (
-                                            <Cell key={`cell-${index}`} fill={entry.color} />
+                                            <Cell
+                                                key={`cell-${index}`}
+                                                fill={entry.color}
+                                                style={{
+                                                    filter: `drop-shadow(0 0 ${index === 0 ? '10px' : '6px'} ${entry.color})`
+                                                }}
+                                            />
                                         ))}
                                     </Pie>
                                 </PieChart>
                             </ResponsiveContainer>
                             {/* Center Text */}
-                            <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', textAlign: 'center' }}>
-                                <div style={{ fontSize: '1.5rem', fontWeight: 700 }}>85%</div>
-                                <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>COMPLIANT</div>
+                            <div style={{
+                                position: 'absolute',
+                                top: '50%',
+                                left: '50%',
+                                transform: 'translate(-50%, -50%)',
+                                textAlign: 'center',
+                                background: 'radial-gradient(circle, rgba(16, 185, 129, 0.15) 0%, transparent 70%)',
+                                borderRadius: '50%',
+                                padding: '40px'
+                            }}>
+                                <div style={{ fontSize: '1.8rem', fontWeight: 700, color: 'var(--sentinel-green)', textShadow: '0 0 10px rgba(16, 185, 129, 0.5)' }}>85%</div>
+                                <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 600, letterSpacing: '0.1em' }}>COMPLIANT</div>
                             </div>
                         </div>
                         <div style={{ marginTop: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                             {policyData.map((d) => (
                                 <div key={d.name} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem' }}>
                                     <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                        <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: d.color }}></div>
+                                        <div style={{
+                                            width: '8px',
+                                            height: '8px',
+                                            borderRadius: '50%',
+                                            background: d.color,
+                                            boxShadow: `0 0 6px ${d.color}`
+                                        }}></div>
                                         {d.name}
                                     </span>
                                     <span style={{ fontWeight: 600 }}>{d.value}%</span>

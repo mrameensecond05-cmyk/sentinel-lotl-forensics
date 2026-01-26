@@ -1,8 +1,11 @@
 :root {
-  /* Sentinel Palette */
+  /* LOTIflow Palette */
   --bg-main: #0B0C15;
+  --bg-app: #0B0C15;
   --bg-sidebar: #11121E;
   --bg-card: #1A1B26;
+  --bg-panel: #1A1B26;
+
   --bg-hover: #232431;
   --bg-input: #12131C;
 
@@ -10,12 +13,16 @@
   --text-secondary: #9CA3AF;
   --text-muted: #6B7280;
 
-  --sentinel-green: #00D084;
-  --sentinel-blue: #3B82F6;
-  --sentinel-red: #EF4444;
-  --sentinel-orange: #F59E0B;
+  --lotiflow-green: #00D084;
+  --lotiflow-blue: #3B82F6;
+  --lotiflow-red: #EF4444;
+  --lotiflow-orange: #F59E0B;
 
   --border-color: #2E3344;
+  --border: 1px solid var(--border-color);
+
+  --radius: 16px;
+  --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
 
   --glass-border: rgba(255, 255, 255, 0.1);
   --accent-primary: #3B82F6;
@@ -28,10 +35,15 @@ body {
   margin: 0;
   padding: 0;
   background: radial-gradient(circle at 50% 0%, #1a1c2e 0%, #0B0C15 100%);
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  background-size: cover;
   color: var(--text-primary);
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
   min-height: 100vh;
+  width: 100vw;
+  overflow-x: hidden;
 }
 
 /* Glassmorphism */
@@ -114,7 +126,7 @@ body {
 }
 
 .btn-primary {
-  background-color: var(--sentinel-green);
+  background-color: var(--lotiflow-green);
   color: #000;
 }
 
@@ -139,7 +151,7 @@ body {
 }
 
 .input-field:focus {
-  border-color: var(--sentinel-green);
+  border-color: var(--lotiflow-green);
 }
 
 /* Risk Grid Map */
@@ -158,11 +170,11 @@ body {
 }
 
 .risk-cell.high {
-  background-color: var(--sentinel-red);
+  background-color: var(--lotiflow-red);
 }
 
 .risk-cell.med {
-  background-color: var(--sentinel-orange);
+  background-color: var(--lotiflow-orange);
 }
 
 .risk-cell.low {
@@ -179,19 +191,19 @@ body {
 }
 
 .status-critical {
-  color: var(--sentinel-red);
+  color: var(--lotiflow-red);
   background: rgba(239, 68, 68, 0.1);
   border: 1px solid rgba(239, 68, 68, 0.2);
 }
 
 .status-high {
-  color: var(--sentinel-orange);
+  color: var(--lotiflow-orange);
   background: rgba(245, 158, 11, 0.1);
   border: 1px solid rgba(245, 158, 11, 0.2);
 }
 
 .status-active {
-  color: var(--sentinel-green);
+  color: var(--lotiflow-green);
   background: rgba(0, 208, 132, 0.1);
   border: 1px solid rgba(0, 208, 132, 0.2);
 }
@@ -212,5 +224,5 @@ body {
 .sidebar-link:hover,
 .sidebar-link.active {
   background-color: rgba(0, 208, 132, 0.1);
-  color: var(--sentinel-green);
+  color: var(--lotiflow-green);
 }

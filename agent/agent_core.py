@@ -4,12 +4,31 @@ import socket
 import time
 import requests
 import psutil
+import urllib3
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 # --- Configuration ---
-# Update this to your deployed server IP for production
-SERVER_API = "http://127.0.0.1:5001/api" 
-CONFIG_FILE = "agent_config.json"        
 SHARED_SECRET = "MySecureProjectPassword2026!"
+CONFIG_FILE = "agent_config.json"
+SETTINGS_FILE = "agent_settings.json"
+
+# Default to localhost, but try to load from settings
+SERVER_API = "http://127.0.0.1:5001/api"
+
+if os.path.exists(SETTINGS_FILE):
+    try:
+        with open(SETTINGS_FILE, "r") as f:
+            settings = json.load(f)
+            if "server_url" in settings:
+                SERVER_API = settings["server_url"]
+                # Ensure no trailing slash
+                if SERVER_API.endswith('/'): SERVER_API = SERVER_API[:-1]
+                # Ensure includes /api if missing (optional, based on user input, but better SAFE)
+                if not SERVER_API.endswith('/api'): SERVER_API += "/api"
+    except Exception as e:
+        print(f"⚠️ Failed to load settings: {e}")
+
+print(f"🔗 Using Server API: {SERVER_API}")
 
 def register_with_server():
     """Performs the first-time handshake with the server."""
@@ -24,7 +43,8 @@ def register_with_server():
 
     try:
         # POST request to your Linux Server
-        response = requests.post(f"{SERVER_API}/enroll", json=payload, timeout=5)
+        # verify=False is used because we are using self-signed certificates
+        response = requests.post(f"{SERVER_API}/enroll", json=payload, timeout=5, verify=False)
         
         if response.status_code == 200:
             creds = response.json()
@@ -93,12 +113,12 @@ def start_monitoring():
         # Send Data to Server
         try:
             # Send Telemetry
-            requests.post(f"{SERVER_API}/telemetry", json=telemetry)
+            requests.post(f"{SERVER_API}/telemetry", json=telemetry, verify=False)
             print(f"📡 Sent Telemetry: CPU {telemetry['cpu']}%")
 
             # Send Logs
             if logs:
-                requests.post(f"{SERVER_API}/logs", json={"agent_id": config['agent_id'], "logs": logs})
+                requests.post(f"{SERVER_API}/logs", json={"agent_id": config['agent_id'], "logs": logs}, verify=False)
                 print(f"📝 Sent {len(logs)} log events")
 
         except Exception as e:

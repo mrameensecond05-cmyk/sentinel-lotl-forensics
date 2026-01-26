@@ -19,10 +19,19 @@ const Layout = () => {
             <aside style={{ width: '260px', backgroundColor: 'var(--bg-sidebar)', padding: '1.5rem', display: 'flex', flexDirection: 'column', borderRight: '1px solid var(--border-color)' }}>
                 {/* Logo */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '3rem', paddingLeft: '0.5rem' }}>
-                    <div style={{ width: '32px', height: '32px', background: 'var(--sentinel-green)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <Shield size={20} color="#000" fill="#000" />
+                    <div style={{
+                        width: '32px',
+                        height: '32px',
+                        background: 'linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%)',
+                        borderRadius: '8px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        boxShadow: '0 0 20px rgba(6, 182, 212, 0.6), 0 0 40px rgba(59, 130, 246, 0.3)'
+                    }}>
+                        <Shield size={20} color="#fff" fill="#fff" style={{ filter: 'drop-shadow(0 0 2px rgba(255,255,255,0.8))' }} />
                     </div>
-                    <span style={{ fontSize: '1.25rem', fontWeight: 700, letterSpacing: '0.05em' }}>SENTINEL</span>
+                    <span style={{ fontSize: '1.25rem', fontWeight: 700, letterSpacing: '0.05em' }}>LOTI-flow</span>
                 </div>
 
                 {/* Navigation */}
