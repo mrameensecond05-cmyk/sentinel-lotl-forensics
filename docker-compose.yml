@@ -1,3 +1,5 @@
+version: '2.2'
+
 services:
   # 1. Frontend (React)
   frontend:
@@ -14,7 +16,6 @@ services:
   backend:
     container_name: lotiflow-backend
     build: ./backend
-    # ports: - "5000:5000" # Removed public access
     volumes:
       - ./agent:/agent
       - ./backend:/app
