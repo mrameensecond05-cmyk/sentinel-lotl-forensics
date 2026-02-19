@@ -45,10 +45,11 @@ const LoginAdmin = () => {
                 if (!loginRes.ok) throw new Error(loginData.error || 'Auto-login failed after registration');
 
                 // Set LocalStorage
-                localStorage.setItem('token', loginData.token);
+                localStorage.setItem('token', 'session-active');
                 localStorage.setItem('userRole', loginData.role);
                 localStorage.setItem('userName', loginData.user.name);
                 localStorage.setItem('userEmail', loginData.user.email);
+                localStorage.setItem('userId', loginData.user.id);
                 navigate('/overview');
                 return;
             }
@@ -57,10 +58,11 @@ const LoginAdmin = () => {
                 throw new Error("Access Denied: Not an Admin Account");
             }
 
-            localStorage.setItem('token', data.token);
+            localStorage.setItem('token', 'session-active');
             localStorage.setItem('userRole', data.role);
             localStorage.setItem('userName', data.user.name);
             localStorage.setItem('userEmail', data.user.email);
+            localStorage.setItem('userId', data.user.id);
 
             navigate('/overview');
 

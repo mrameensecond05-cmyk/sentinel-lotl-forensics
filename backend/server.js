@@ -164,6 +164,7 @@ app.post('/api/login', async (req, res) => {
                 success: true,
                 role: user.role_name.toLowerCase(),
                 user: {
+                    id: user.login_id,
                     name: user.full_name,
                     email: user.email
                 }

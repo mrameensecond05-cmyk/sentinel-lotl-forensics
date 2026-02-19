@@ -40,7 +40,7 @@ const LoginUser = () => {
                 // I need to patch backend/server.js Login route to return ID too.
 
                 // Storing tentative values
-                localStorage.setItem('token', data.token);
+                localStorage.setItem('token', 'session-active');
                 localStorage.setItem('userRole', data.role);
                 localStorage.setItem('userName', data.user.name);
                 localStorage.setItem('userEmail', data.user.email);
