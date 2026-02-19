@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Edit2, Trash2, Plus, User as UserIcon, FileText as FileTextIcon, Clock as ClockIcon, Settings as SettingsIcon, Server, Download, Copy, CheckCircle, XCircle, Activity } from 'lucide-react';
 
-const API_URL = 'http://localhost:8082/api';
+const API_URL = '/api';
 
 const Systems = () => {
     const [activeTab, setActiveTab] = useState('users');

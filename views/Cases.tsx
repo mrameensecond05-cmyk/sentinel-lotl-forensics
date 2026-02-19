@@ -16,7 +16,7 @@ import {
     Activity
 } from 'lucide-react';
 
-const API_URL = 'http://localhost:8082/api';
+const API_URL = '/api';
 
 const Cases = () => {
     const [cases, setCases] = useState<any[]>([]);

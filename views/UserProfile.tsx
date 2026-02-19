@@ -15,7 +15,7 @@ const UserProfile = () => {
         machine_password: ''
     });
 
-    const API_URL = 'http://localhost:8082/api';
+    const API_URL = '/api';
 
     useEffect(() => {
         // Load user data

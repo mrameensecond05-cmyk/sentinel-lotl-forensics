@@ -8,7 +8,7 @@ import {
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
-const API_URL = 'http://localhost:8082/api';
+const API_URL = '/api';
 const mockGraphData = [
     { name: '10:00', activity: 20 }, { name: '10:05', activity: 35 },
     { name: '10:10', activity: 25 }, { name: '10:15', activity: 60 },

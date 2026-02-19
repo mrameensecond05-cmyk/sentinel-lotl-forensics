@@ -9,7 +9,7 @@ const LoginUser = () => {
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
 
-    const API_URL = 'http://localhost:8082/api';
+    const API_URL = '/api';
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
