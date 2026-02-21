@@ -1,15 +1,18 @@
 
 import React from 'react';
-import { 
-  LayoutDashboard, 
-  Compass, 
-  Settings, 
-  Activity,
-  Shield,
+import {
+  LayoutDashboard,
+  Compass,
+  Settings,
   Zap,
   Box,
-  Heart
+  Heart,
+  Search,
+  Globe,
+  Ghost
 } from 'lucide-react';
+
+
 
 export const COLORS = {
   bg: 'bg-slate-50 dark:bg-[#0b0f1a]',
@@ -23,8 +26,12 @@ export const COLORS = {
 export const NAVIGATION_ITEMS = [
   { id: 'dashboard', label: 'Overview', icon: <LayoutDashboard size={20} strokeWidth={1.5} /> },
   { id: 'analyst', label: 'Intelligence', icon: <Compass size={20} strokeWidth={1.5} /> },
+  { id: 'vulnerabilities', label: 'Vulnerabilities', icon: <Ghost size={20} strokeWidth={1.5} /> },
+  { id: 'explorer', label: 'Log Explorer', icon: <Search size={20} strokeWidth={1.5} /> },
+  { id: 'map', label: 'Threat Map', icon: <Globe size={20} strokeWidth={1.5} /> },
   { id: 'admin', label: 'Systems', icon: <Settings size={20} strokeWidth={1.5} /> }
 ];
+
 
 export const MOCK_ALERTS: any[] = [
   {

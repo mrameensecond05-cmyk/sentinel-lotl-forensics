@@ -1,8 +1,9 @@
 import React from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import {
-    LayoutDashboard, Shield, Server, Search, Bell, User, Zap, Circle, Briefcase
+    LayoutDashboard, Shield, Server, Search, Bell, User, Zap, Circle, Briefcase, Globe, Ghost
 } from 'lucide-react';
+
 
 const Layout = () => {
     const location = useLocation();
@@ -10,8 +11,13 @@ const Layout = () => {
     const getPageTitle = (path: string) => {
         if (path.includes('intelligence')) return 'Intelligence';
         if (path.includes('systems')) return 'Systems';
+        if (path.includes('vulnerabilities')) return 'Vulnerabilities';
+        if (path.includes('explorer')) return 'Log Explorer';
+        if (path.includes('map')) return 'Threat Map';
+        if (path.includes('cases')) return 'Cases';
         return 'Dashboard'; // Default to Overview
     };
+
 
     return (
         <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: 'var(--bg-main)' }}>
@@ -45,9 +51,19 @@ const Layout = () => {
                     <NavLink to="/cases" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}>
                         <Briefcase size={20} /> Cases
                     </NavLink>
+                    <NavLink to="/vulnerabilities" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}>
+                        <Ghost size={20} /> Vulnerabilities
+                    </NavLink>
+                    <NavLink to="/explorer" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}>
+                        <Search size={20} /> Log Explorer
+                    </NavLink>
+                    <NavLink to="/map" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}>
+                        <Globe size={20} /> Threat Map
+                    </NavLink>
                     <NavLink to="/systems" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}>
                         <Server size={20} /> Systems
                     </NavLink>
+
                 </nav>
 
                 {/* Bottom Status */}

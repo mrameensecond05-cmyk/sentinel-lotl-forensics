@@ -588,6 +588,60 @@ app.get('/api/logs/all', async (req, res) => {
     }
 });
 
+// 13. Vulnerability Management (Mock)
+app.get('/api/vulnerabilities', async (req, res) => {
+    // In a real app, this would query a vuln database or scan results
+    const mockVulns = [
+        { id: 1, cve: 'CVE-2024-38063', severity: 'critical', host: 'FIN-SRV-01', description: 'Windows TCP/IP Remote Code Execution Vulnerability', status: 'pending' },
+        { id: 2, cve: 'CVE-2023-34362', severity: 'high', host: 'DEV-WKST-04', description: 'MOVEit Transfer Infrastructure Vulnerability', status: 'mitigated' },
+        { id: 3, cve: 'CVE-2024-21412', severity: 'medium', host: 'FIN-SRV-01', description: 'Internet Explorer Shortcut File Security Feature Bypass', status: 'open' },
+        { id: 4, cve: 'CVE-2024-30044', severity: 'critical', host: 'DEV-WKST-04', description: 'Microsoft SharePoint Server Remote Code Execution', status: 'pending' }
+    ];
+    res.json(mockVulns);
+});
+
+// 14. Log Explorer (Advanced Search)
+app.post('/api/logs/search', async (req, res) => {
+    const { query, host, user, process } = req.body;
+    try {
+        let sql = `
+            SELECT e.event_id, e.timestamp, e.process_name, e.command_line, e.user_name, h.hostname
+            FROM lotl_process_event e
+            JOIN lotl_host h ON e.host_id = h.host_id
+            WHERE 1=1
+        `;
+        const params = [];
+
+        if (host) { sql += " AND h.hostname LIKE ?"; params.push(`%${host}%`); }
+        if (user) { sql += " AND e.user_name LIKE ?"; params.push(`%${user}%`); }
+        if (process) { sql += " AND e.process_name LIKE ?"; params.push(`%${process}%`); }
+        if (query) { sql += " AND (e.command_line LIKE ? OR e.process_name LIKE ?)"; params.push(`%${query}%`, `%${query}%`); }
+
+        sql += " ORDER BY e.timestamp DESC LIMIT 100";
+        const rows = await dbAll(sql, params);
+        res.json(rows);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// 15. Threat Map Data (Mock)
+app.get('/api/threat-map', async (req, res) => {
+    const mockMapData = [
+        { id: 1, lat: 40.7128, lng: -74.0060, city: 'New York', hostCount: 12, threatLevel: 'low' },
+        { id: 2, lat: 51.5074, lng: -0.1278, city: 'London', hostCount: 8, threatLevel: 'medium' },
+        { id: 3, lat: 35.6762, lng: 139.6503, city: 'Tokyo', hostCount: 15, threatLevel: 'high' },
+        { id: 4, lat: -33.8688, lng: 151.2093, city: 'Sydney', hostCount: 5, threatLevel: 'low' },
+        { id: 5, lat: 1.3521, lng: 103.8198, city: 'Singapore', hostCount: 22, threatLevel: 'critical' }
+    ];
+    res.json({
+        globalThreatLevel: 'MODERATE',
+        lastUpdate: new Date().toISOString(),
+        nodes: mockMapData
+    });
+});
+
+
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server running on port ${PORT}`);
 });

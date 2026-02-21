@@ -11,6 +11,10 @@ import Systems from './views/Systems';
 import UserDashboard from './views/UserDashboard';
 import UserProfile from './views/UserProfile';
 import Cases from './views/Cases';
+import VulnerabilityManagement from './views/VulnerabilityManagement';
+import LogExplorer from './views/LogExplorer';
+import ThreatMap from './views/ThreatMap';
+
 
 function App() {
   return (
@@ -49,7 +53,23 @@ function App() {
               <Cases />
             </ProtectedRoute>
           } />
+          <Route path="/vulnerabilities" element={
+            <ProtectedRoute requireAdmin={true}>
+              <VulnerabilityManagement />
+            </ProtectedRoute>
+          } />
+          <Route path="/explorer" element={
+            <ProtectedRoute requireAdmin={true}>
+              <LogExplorer />
+            </ProtectedRoute>
+          } />
+          <Route path="/map" element={
+            <ProtectedRoute requireAdmin={true}>
+              <ThreatMap />
+            </ProtectedRoute>
+          } />
         </Route>
+
 
         {/* Protected User Routes - Admins redirected to admin dashboard */}
         <Route path="/user" element={
