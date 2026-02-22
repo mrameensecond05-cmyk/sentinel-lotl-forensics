@@ -516,11 +516,21 @@ app.post('/api/enroll', async (req, res) => {
 app.post('/api/telemetry', async (req, res) => {
     const { agent_id, cpu, ram, disk } = req.body;
     try {
+        // 1. Update Agent last_seen
         const result = await dbRun(
             'UPDATE lotl_agent SET last_seen = CURRENT_TIMESTAMP WHERE agent_uuid = ?',
             [agent_id]
         );
         if (result.changes === 0) return res.status(404).json({ error: "Agent not found" });
+
+        // 2. Sync with Host last_seen for global dashboard
+        await dbRun(`
+            UPDATE lotl_host h
+            JOIN lotl_agent a ON h.host_id = a.host_id
+            SET h.last_seen = CURRENT_TIMESTAMP
+            WHERE a.agent_uuid = ?
+        `, [agent_id]);
+
         console.log(`Telemetry from ${agent_id}: CPU ${cpu}%, RAM ${ram}%`);
         res.json({ status: "processed" });
     } catch (err) {

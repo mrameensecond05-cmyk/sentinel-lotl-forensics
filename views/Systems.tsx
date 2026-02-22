@@ -149,10 +149,10 @@ const Systems = () => {
                                     </td>
                                     <td style={{ padding: '20px' }}>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                            {endpoint.status === 'active' ? (
-                                                <><CheckCircle size={14} color="var(--sentinel-green)" /> <span style={{ color: 'var(--sentinel-green)', fontSize: '0.85rem', fontWeight: 600 }}>ACTIVE</span></>
+                                            {endpoint.connectivity_status === 'online' ? (
+                                                <><div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--sentinel-green)', boxShadow: '0 0 8px var(--sentinel-green)' }}></div> <span style={{ color: 'var(--sentinel-green)', fontSize: '0.85rem', fontWeight: 700 }}>ONLINE</span></>
                                             ) : (
-                                                <><XCircle size={14} color="var(--text-muted)" /> <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>INACTIVE</span></>
+                                                <><div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--text-muted)' }}></div> <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem', fontWeight: 600 }}>OFFLINE</span></>
                                             )}
                                         </div>
                                     </td>

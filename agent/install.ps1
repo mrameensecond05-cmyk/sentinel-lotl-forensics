@@ -1,18 +1,34 @@
 # LOTIflow Agent Installer
 $ErrorActionPreference = "Stop"
 
+function Pause-AndExit {
+    Write-Host "`n==========================================" -ForegroundColor Cyan
+    Write-Host "Press any key to exit..." -ForegroundColor Cyan
+    $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+    exit
+}
+
 Write-Host "==========================================" -ForegroundColor Cyan
 Write-Host "       LOTIflow Agent Installer" -ForegroundColor Cyan
 Write-Host "==========================================" -ForegroundColor Cyan
 
 try {
+    # 0. Check Execution Policy
+    $policy = Get-ExecutionPolicy
+    if ($policy -eq "Restricted") {
+        Write-Host "⚠️ Warning: PowerShell Execution Policy is set to 'Restricted'." -ForegroundColor Yellow
+        Write-Host "You may need to run: 'Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass' to run scripts." -ForegroundColor Gray
+    }
+
     # 1. Check for Python
     try {
         $pythonVersion = python --version 2>&1
         Write-Host "✅ Python found: $pythonVersion" -ForegroundColor Green
-    } catch {
-        Write-Host "❌ Python is not installed or not in PATH. Please install Python 3.8+ and try again." -ForegroundColor Red
-        throw "Python missing"
+    }
+    catch {
+        Write-Host "❌ Python is not installed or not in PATH." -ForegroundColor Red
+        Write-Host "Please install Python 3.8+ from python.org and ensure 'Add Python to PATH' is checked." -ForegroundColor Yellow
+        Pause-AndExit
     }
 
     # 2. Server Configuration
@@ -20,7 +36,7 @@ try {
     $ServerUrl = Read-Host "Enter LOTIflow Server URL (e.g., http://192.168.1.5:5001)"
     if ([string]::IsNullOrWhiteSpace($ServerUrl)) {
         Write-Host "❌ Server URL is required." -ForegroundColor Red
-        throw "Server URL missing"
+        Pause-AndExit
     }
 
     # Remove trailing slash if present
@@ -31,6 +47,28 @@ try {
     # Ensure http if not specified
     if (-not $ServerUrl.StartsWith("http")) {
         $ServerUrl = "http://$ServerUrl"
+    }
+
+    # Connectivity Check
+    Write-Host "🔍 Testing connection to $ServerUrl..." -ForegroundColor Yellow
+    try {
+        $uri = New-Object System.Uri($ServerUrl)
+        $hostName = $uri.Host
+        $port = $uri.Port
+        if ($port -eq -1) { $port = 80 }
+
+        Write-Host "Checking port $port on $hostName..." -ForegroundColor Gray
+        $connectionTest = Test-NetConnection -ComputerName $hostName -Port $port -InformationLevel Quiet
+        if (-not $connectionTest) {
+            Write-Host "❌ Cannot reach the server on port $port." -ForegroundColor Red
+            Write-Host "Please ensure the server is running and the IP/Port is correct." -ForegroundColor Yellow
+            Write-Host "Also check if your Firewall or Antivirus is blocking the connection." -ForegroundColor Gray
+            Pause-AndExit
+        }
+        Write-Host "✅ Connection successful!" -ForegroundColor Green
+    }
+    catch {
+        Write-Host "⚠️ Connectivity check skipped or failed: $($_.Exception.Message)" -ForegroundColor Gray
     }
 
     # Create Settings File
@@ -44,23 +82,28 @@ try {
     # 3. Install Dependencies
     Write-Host "`n📦 Installing dependencies..." -ForegroundColor Yellow
     try {
-        pip install -r requirements.txt
+        python -m pip install -r requirements.txt
         Write-Host "✅ Dependencies installed." -ForegroundColor Green
-    } catch {
-        Write-Host "❌ Failed to install dependencies. Check your internet connection." -ForegroundColor Red
-        throw "Dependency failure"
+    }
+    catch {
+        Write-Host "❌ Failed to install dependencies." -ForegroundColor Red
+        Write-Host "Error: $($_.Exception.Message)" -ForegroundColor Gray
+        Pause-AndExit
     }
 
     # 4. Run Agent
     Write-Host "`n🚀 Starting Agent..." -ForegroundColor Cyan
     try {
         python agent_core.py
-    } catch {
+    }
+    catch {
         Write-Host "❌ Failed to start agent." -ForegroundColor Red
+        Write-Host "Error: $($_.Exception.Message)" -ForegroundColor Gray
     }
 }
+catch {
+    Write-Host "`n❌ An unexpected error occurred: $($_.Exception.Message)" -ForegroundColor Red
+}
 finally {
-    Write-Host "`n==========================================" -ForegroundColor Cyan
-    Write-Host "Done. Press any key to exit..." -ForegroundColor Cyan
-    $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+    Pause-AndExit
 }

@@ -30,6 +30,8 @@ const UserDashboard = () => {
     const [networkLocked, setNetworkLocked] = useState(false);
     const [showInstallModal, setShowInstallModal] = useState(false);
     const [logs, setLogs] = useState<any[]>([]);
+    const [endpoints, setEndpoints] = useState<any[]>([]);
+    const [myStatus, setMyStatus] = useState<'online' | 'offline'>('offline');
 
     useEffect(() => {
         // Fetch logs
@@ -37,13 +39,32 @@ const UserDashboard = () => {
             try {
                 const res = await fetch(`${API_URL}/logs/all`);
                 const data = await res.json();
-                setLogs(data);
+                setLogs(data.slice(0, 50));
             } catch (err) {
                 console.error("Failed to fetch logs", err);
             }
         };
+
+        const fetchStatus = async () => {
+            try {
+                const res = await fetch(`${API_URL}/hosts`);
+                const data = await res.json();
+                setEndpoints(data);
+                if (data.length > 0) {
+                    setMyStatus(data[0].connectivity_status);
+                    if (data[0].connectivity_status === 'online') setSystemStatus('safe');
+                }
+            } catch (err) {
+                console.error("Failed to fetch status", err);
+            }
+        };
+
         fetchLogs();
-        const interval = setInterval(fetchLogs, 5000);
+        fetchStatus();
+        const interval = setInterval(() => {
+            fetchLogs();
+            fetchStatus();
+        }, 5000);
         return () => clearInterval(interval);
     }, []);
 
@@ -75,10 +96,12 @@ const UserDashboard = () => {
             {/* Header */}
             <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                    <Shield size={32} color={systemStatus === 'safe' ? 'var(--sentinel-green)' : 'var(--sentinel-red)'} />
+                    <Shield size={32} color={myStatus === 'online' ? 'var(--sentinel-green)' : 'var(--sentinel-red)'} />
                     <div>
                         <h1 style={{ fontSize: '1.5rem', margin: 0 }}>Endpoint Monitor</h1>
-                        <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted)' }}>Local Agent Interface • Host: WORKSTATION-01</p>
+                        <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                            Local Agent Interface • Host: {endpoints[0]?.hostname || 'WORKSTATION-01'}
+                        </p>
                     </div>
                 </div>
                 <div style={{ display: 'flex', gap: '16px' }}>
@@ -110,8 +133,9 @@ const UserDashboard = () => {
                         {networkLocked ? <><Lock size={16} /> NETWORK ISOLATED</> : <><Unlock size={16} /> NETWORK OPEN</>}
                     </button>
 
-                    <div className={`status-badge ${systemStatus === 'safe' ? 'status-active' : 'status-critical'}`} style={{ fontSize: '1rem', padding: '0.5rem 1rem', display: 'flex', alignItems: 'center' }}>
-                        {systemStatus === 'safe' ? 'PROTECTED' : 'THREAT DETECTED'}
+                    <div className={`status-badge ${myStatus === 'online' ? 'status-active' : 'status-critical'}`} style={{ fontSize: '1rem', padding: '0.5rem 1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: myStatus === 'online' ? 'var(--sentinel-green)' : 'var(--sentinel-red)', boxShadow: myStatus === 'online' ? '0 0 8px var(--sentinel-green)' : 'none' }}></div>
+                        {myStatus === 'online' ? 'CONNECTED' : 'DISCONNECTED'}
                     </div>
                 </div>
             </header>
