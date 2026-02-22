@@ -105,8 +105,11 @@ const Systems = () => {
                 </h3>
                 <ol style={{ color: 'var(--text-secondary)', paddingLeft: '20px', fontSize: '0.9rem', lineHeight: '1.8' }}>
                     <li>Download the agent installer using the button above</li>
-                    <li>Extract the ZIP file on your Windows endpoint</li>
-                    <li>Right-click <code>install.ps1</code> and select "Run with PowerShell" (as Administrator)</li>
+                    <li>Extract the ZIP file on your Windows or Linux endpoint</li>
+                    <li>
+                        <strong>Windows:</strong> Right-click <code>install.ps1</code> and select "Run with PowerShell"
+                        <br /><strong>Alternative (All Platforms):</strong> Run <code>python install.py</code> in your terminal
+                    </li>
                     <li>When prompted, enter this server URL: <code>http://{window.location.hostname}:8082</code></li>
                     <li>Enter the enrollment password: <code>MySecureProjectPassword2026!</code></li>
                     <li>The endpoint will appear below once enrolled successfully</li>

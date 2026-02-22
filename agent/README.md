@@ -17,11 +17,15 @@ This guide will help you install and connect the monitoring agent to your Window
     ```
 
 ## 🛠️ Step 2: Run the Installer
-1.  Navigate to the agent folder.
-2.  Right-click `install.ps1` and select **Run with PowerShell**, or run it from your terminal:
-    ```powershell
-    .\install.ps1
-    ```
+1.  **Run the Installer**:
+    - **Windows**: Right-click `install.ps1` and select **Run with PowerShell**, or run it from your terminal:
+      ```powershell
+      .\install.ps1
+      ```
+    - **Alternative (Recommended)**: Use the unified Python installer (works on Windows/Linux):
+      ```bash
+      python install.py
+      ```
 3.  The script will:
     - Check for Python.
     - Install necessary libraries (`psutil`, `requests`).

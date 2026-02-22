@@ -456,6 +456,7 @@ app.get('/api/agent/download', async (req, res) => {
         // Add only specific files
         zip.addLocalFile(path.join(agentFolder, 'agent_core.py'));
         zip.addLocalFile(path.join(agentFolder, 'install.ps1'));
+        zip.addLocalFile(path.join(agentFolder, 'install.py'));
         zip.addLocalFile(path.join(agentFolder, 'requirements.txt'));
         zip.addLocalFile(path.join(agentFolder, 'simulate_attack.ps1'));
         zip.addLocalFile(path.join(agentFolder, 'simulate_attack.py'));
