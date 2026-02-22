@@ -6,6 +6,8 @@ import requests
 import psutil
 import platform
 import urllib3
+import sys
+
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 # --- Configuration ---
@@ -16,18 +18,31 @@ SETTINGS_FILE = "agent_settings.json"
 # Default to localhost, but try to load from settings
 SERVER_API = "http://127.0.0.1:5001/api"
 
+# 1. Load from settings file if it exists
 if os.path.exists(SETTINGS_FILE):
     try:
         with open(SETTINGS_FILE, "r") as f:
             settings = json.load(f)
             if "server_url" in settings:
                 SERVER_API = settings["server_url"]
-                # Ensure no trailing slash
-                if SERVER_API.endswith('/'): SERVER_API = SERVER_API[:-1]
-                # Ensure includes /api if missing
-                if not SERVER_API.endswith('/api'): SERVER_API += "/api"
     except Exception as e:
         print(f"⚠️ Failed to load settings: {e}")
+
+# 2. Override with command-line argument if provided
+if len(sys.argv) > 1:
+    arg = sys.argv[1]
+    if arg.startswith("http"):
+        SERVER_API = arg
+    else:
+        # Assume it's just an IP or hostname
+        SERVER_API = f"http://{arg}:5001/api"
+    print(f"🎮 Command-line override: {SERVER_API}")
+
+# 3. Normalization: Ensure no trailing slash and includes /api
+if SERVER_API.endswith('/'): 
+    SERVER_API = SERVER_API[:-1]
+if not SERVER_API.endswith('/api'): 
+    SERVER_API += "/api"
 
 print(f"🔗 Using Server API: {SERVER_API}")
 
@@ -111,13 +126,22 @@ def start_monitoring():
     # 2. Main Loop
     print("🚀 Agent started monitoring...")
     while True:
-        # Gather Telemetry
-        telemetry = {
-            "agent_id": config['agent_id'],
-            "cpu": psutil.cpu_percent(),
-            "ram": psutil.virtual_memory().percent,
-            "disk": psutil.disk_usage('/').percent
-        }
+        try:
+            # Gather Telemetry
+            telemetry = {
+                "agent_id": config['agent_id'],
+                "cpu": psutil.cpu_percent(),
+                "ram": psutil.virtual_memory().percent,
+                "disk": psutil.disk_usage(os.path.abspath(os.sep)).percent
+            }
+        except Exception as e:
+            print(f"⚠️ Telemetry gathering error: {e}")
+            telemetry = {
+                "agent_id": config['agent_id'],
+                "cpu": 0,
+                "ram": 0,
+                "disk": 0
+            }
         
         # Gather Logs
         logs = collect_logs()
@@ -133,6 +157,9 @@ def start_monitoring():
                 requests.post(f"{SERVER_API}/logs", json={"agent_id": config['agent_id'], "logs": logs}, timeout=5, verify=False)
                 print(f"📝 Sent {len(logs)} log events")
 
+        except requests.exceptions.ConnectionError:
+            print(f"❌ Connection Error: Could not reach server at {SERVER_API}.")
+            print(f"   Check your network connection and server IP.")
         except Exception as e:
              print(f"❌ Network Error during data transmission: {e}")
 

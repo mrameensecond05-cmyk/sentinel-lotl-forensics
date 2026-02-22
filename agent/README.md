@@ -25,7 +25,9 @@ This guide will help you install and connect the monitoring agent to your Window
 3.  The script will:
     - Check for Python.
     - Install necessary libraries (`psutil`, `requests`).
-    - **Test your connection** to the server.
+    - Test your connection to the server.
+
+---
 
 ## 🔗 Step 3: Connect to the Server
 1.  When prompted: "Please enter the Full Server API URL", type your server's address.
@@ -33,15 +35,26 @@ This guide will help you install and connect the monitoring agent to your Window
 2.  The script will verify the connection and register your machine.
 3.  Wait for the message: **✅ Registration Success!**
 
-## 📊 Step 4: Start Monitoring
-1.  The agent will automatically start after registration.
-2.  To manually start it later, run:
-    ```powershell
-    python agent_core.py
+### 💡 VM Tip: Dynamic IP Support
+If you are running the server on a Virtual Machine with a changing IP, you can skip the configuration file and run the agent directly with the IP as an argument:
+
+```bash
+python3 agent_core.py [YOUR_VM_IP]
+```
+*Example:* `python3 agent_core.py 192.168.1.75`
+
+---
+
+## �️ Step 4: Run Simulation (Demo)
+To see the LOTIflow agent in action, you can run the attack simulation script. This will perform common "Living Off The Land" (LOTL) techniques that the agent will detect and report.
+
+1.  While the agent is running in one terminal, open a **second terminal**.
+2.  Navigate to the `agent` folder.
+3.  Run the simulation:
+    ```bash
+    python3 simulate_attack.py
     ```
-3.  **Verify on Dashboard**:
-    - Open the Admin Panel > **Systems** > **Endpoints**.
-    - Your machine should appear with a **🟢 ONLINE** status.
+4.  **Check your Dashboard**: You should see new alerts appearing in the **Alert Center**.
 
 ---
 

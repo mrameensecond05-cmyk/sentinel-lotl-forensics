@@ -61,8 +61,11 @@ try {
         $connectionTest = Test-NetConnection -ComputerName $hostName -Port $port -InformationLevel Quiet
         if (-not $connectionTest) {
             Write-Host "❌ Cannot reach the server on port $port." -ForegroundColor Red
-            Write-Host "Please ensure the server is running and the IP/Port is correct." -ForegroundColor Yellow
-            Write-Host "Also check if your Firewall or Antivirus is blocking the connection." -ForegroundColor Gray
+            Write-Host "Troubleshooting Steps:" -ForegroundColor Yellow
+            Write-Host "1. Ensure the backend server is running on the host machine." -ForegroundColor Gray
+            Write-Host "2. Verify the IP address ($hostName) and Port ($port) are correct." -ForegroundColor Gray
+            Write-Host "3. Check if the server's firewall allows incoming connections on port $port." -ForegroundColor Gray
+            Write-Host "4. If running in a VM, ensure the network mode allows VM-to-Host communication (Bridge or NAT with port forwarding)." -ForegroundColor Gray
             Pause-AndExit
         }
         Write-Host "✅ Connection successful!" -ForegroundColor Green
